@@ -1,3 +1,5 @@
+import sys
+
 # R : Rows
 # C : Cols
 # L : Minimum of each ingredient in a slice
@@ -8,6 +10,18 @@ R, C, L, H = (int(x) for x in input().split())
 grid = []
 for r in range(R):
     grid += [list(input())]
+
+# Types de rectangles possibles
+rect = []
+def generate_rectangles():
+    global rect
+    for j in range(L, H+1):
+        for i in range(1, j+1):
+            if j%i == 0:
+                rect += [(i, j//i)]
+generate_rectangles()
+print('Total possible rectangles : {}'.format(len(rect)), file=sys.stderr)
+            
 
 # Dans la suite du code, une partition est un 4-tuple (x0, y0, x1, y1)
 def ncells(partition):
@@ -60,13 +74,6 @@ def is_valid(p_list):
                     return False
                 g[y][x] = True
     return True
-
-# Test des fonctions sur l'exemple de l'énoncé :
-solution = [(0, 0, 1, 2), (2, 0, 2, 2), (3, 0, 4, 2)]
-print(grid)
-print(score(solution))
-print(list(contents(x) for x in solution))
-print(is_valid(solution))
 
 
     
