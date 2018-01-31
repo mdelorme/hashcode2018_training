@@ -7,7 +7,7 @@ R, C, L, H = (int(x) for x in input().split())
 # Grid represente la pizza, c'est une liste de liste (row-major)
 grid = []
 for r in range(R):
-    grid += list(input())
+    grid += [list(input())]
 
 # Dans la suite du code, une partition est un 4-tuple (x0, y0, x1, y1)
 def ncells(partition):
@@ -34,7 +34,7 @@ def score(p_list):
     ''' Score total sur une liste de partitions '''
     return sum(ncells(x) for x in p_list)
 
-def is_valid(partition):
+def is_valid(p_list):
     ''' 
     Est-ce que la liste de partition est valide ?
     Rappel des critères de validité :
@@ -42,8 +42,8 @@ def is_valid(partition):
      - Le nombre de cellules d'une partition ne peut depasser H
      - Chaque partition doit contenir au moins L ingredients de chaque type
     '''
-    g = [[False]*C for _ in range(L)]
-    for p in partition:
+    g = [[False]*C for _ in range(R)]
+    for p in p_list:
         # Pas assez d'ingredients
         M, T = contents(p)
         if M < L or T < L:
@@ -61,6 +61,12 @@ def is_valid(partition):
                 g[y][x] = True
     return True
 
+# Test des fonctions sur l'exemple de l'énoncé :
+solution = [(0, 0, 1, 2), (2, 0, 2, 2), (3, 0, 4, 2)]
+print(grid)
+print(score(solution))
+print(list(contents(x) for x in solution))
+print(is_valid(solution))
 
 
     
