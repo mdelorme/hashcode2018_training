@@ -6,27 +6,35 @@ import sys
 # H : Maximum cells of a slice
 R, C, L, H = (int(x) for x in input().split())
 
+print('Rows       : {}'.format(R))
+print('Cols       : {}'.format(C))
+print('Minimum (L): {}'.format(L))
+print('Maximum (H): {}'.format(H))
+
 # Grid represente la pizza, c'est une liste de liste (row-major)
 grid = []
 for r in range(R):
     grid += [list(input())]
 
 # Types de rectangles possibles
-rect = []
 def generate_rectangles():
-    global rect
-    for j in range(L, H+1):
+    rect = []
+    # Le rectangle le plus petit compte au moins L mushroom ET L tomato
+    for j in range(2*L, H+1):
         for i in range(1, j+1):
             if j%i == 0:
                 rect += [(i, j//i)]
-generate_rectangles()
+    return rect
+
+rect = generate_rectangles()
 print('Total possible rectangles : {}'.format(len(rect)), file=sys.stderr)
-            
+
 
 # Dans la suite du code, une partition est un 4-tuple (x0, y0, x1, y1)
 def ncells(partition):
     ''' Nombre de cellules dans une partition '''
-    return (partition[2]-partition[0]) * (partition[3]-partition[1])
+    # En exemple, entre le rows (0, 2) et les columns (0, 1), il y a 6 elements
+    return (partition[2]-partition[0]+1) * (partition[3]-partition[1]+1)
 
 def contents(partition):
     ''' 
