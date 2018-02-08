@@ -1,4 +1,5 @@
 import sys
+from types import SimpleNamespace as sns
 
 # R : Rows
 # C : Cols
@@ -38,20 +39,20 @@ print('Total possible rectangles : {}'.format(len(rect)), file=sys.stderr)
 print (rect)
 
 # Dans la suite du code, une partition est un 4-tuple (x0, x1, y0, y1)
-def ncells(partition):
+def ncells(p):
     ''' Nombre de cellules dans une partition '''
     # En exemple, entre le rows (0, 2) et les columns (0, 1), il y a 6 elements
-    return (partition[1]-partition[0]+1) * (partition[3]-partition[2]+1)
+    return (p.x1 - p.x0 + 1) * (p.y1 - p.y0 + 1)
 
-def contents(partition):
+def contents(p):
     ''' 
     Renvoie le contenu d'une partition sous la forme d'un couple
     (Mushroom, Tomato)
     '''
     M = 0 # Champignons
     T = 0 # Tomates
-    for y in range(partition[2], partition[3]+1):
-        for x in range(partition[0], partition[1]+1):
+    for y in range(p.y0, p.y1 + 1):
+        for x in range(p.x0, p.x1 + 1):
             if grid[y][x] == M_int:
                 M += 1
             else:
@@ -61,11 +62,11 @@ def contents(partition):
 
 def score(p_list):
     ''' Score total sur une liste de partitions '''
-    return sum(ncells(x) for x in p_list)
+    return sum(ncells(p) for p in p_list)
 
 def is_rectangle_valid(rect):
     # Dans les limites du terrain
-    x0, x1, y0, y1 = rect
+    x0, x1, y0, y1 = rect.x0, rect.x1, rect.y0, rect.y1
     if ((x0 < 0) or ((C - 1) < x0) or
         (x1 < 0) or ((C - 1) < x1) or
         (y0 < 0) or ((R - 1) < y0) or
@@ -77,14 +78,14 @@ def does_overlap(p_list, rect):
     g = [[False]*C for _ in range(R)]
     for p in p_list:
         # On verifie que les cellules ne sont pas en double
-        for y in range(p[2], p[3]+1):
-            for x in range(p[0], p[1]+1):
+        for y in range(p.y0, p.y1 + 1):
+            for x in range(p.x0, p.x1 + 1):
                 if g[y][x]:
                     return False
                 g[y][x] = True
 
 
-    x0, x1, y0, y1 = rect
+    x0, x1, y0, y1 = rect.x0, rect.x1, rect.y0, rect.y1
     for y in range(y0, y1 + 1):
         for x in range(x0, x1 + 1):
             if g[y][x]:
@@ -101,7 +102,6 @@ def is_valid(p_list):
      - Le nombre de cellules d'une partition ne peut depasser H
      - Chaque partition doit contenir au moins L ingredients de chaque type
     '''
-    # g = [[False]*C for _ in range(R)]
     for p in p_list:
         # Pas assez d'ingredients
         M, T = contents(p)
@@ -112,26 +112,22 @@ def is_valid(p_list):
         if (M + T) > H:
             return False
 
-        # # On verifie que les cellules ne sont pas en double
-        # for x in range(p[0], p[1]+1):
-        #     for y in range(p[2], p[3]+1):
-        #         if g[y][x]:
-        #             return False
-        #         g[y][x] = True
     return True
 
 
 best_score     = -1
 best_partition = None
 
-def recur_aux(l_partition):
+def backtrack(l_partition):
     global best_score
 
     for cur_x in range(C - 1):
         for cur_y in range(R - 1):
-
             for shape in rect:
-                cur_rect = (cur_x, cur_x + shape[0] - 1, cur_y, cur_y + shape[1] - 1)
+                cur_rect = sns(x0 = cur_x,
+                               x1 = cur_x + shape[0] - 1,
+                               y0 = cur_y,
+                               y1 = cur_y + shape[1] - 1)
                 if (not is_rectangle_valid(cur_rect)):
                     continue
 
@@ -139,18 +135,14 @@ def recur_aux(l_partition):
                     continue
 
                 l_partition.append(cur_rect)
-                # print("l_partition ", l_partition, is_valid(l_partition))
-                # print("is_valid(cur_rect) ")
                 if (is_valid(l_partition)):
-                # if (is_valid(l_partition) and (best_score < score(l_partition))):
-                    # print("score", score(l_partition))
                     if (best_score < score(l_partition)):
                         print("best_partition:", l_partition, score(l_partition))
                         best_score     = score(l_partition)
                         best_partition = l_partition[:]
-                    recur_aux(l_partition)
+                    backtrack(l_partition)
                 l_partition.pop()
 
 
 l_partition = []
-recur_aux(l_partition)
+backtrack(l_partition)
