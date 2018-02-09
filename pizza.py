@@ -17,17 +17,14 @@ T_id = 1
 # Grid represente la pizza, c'est une liste de liste (row-major)
 grid = []
 for r in range(R):
-    # grid += [list(input())]
     l = list(input())
     l = list(map(lambda c : M_id if (c == "M") else T_id, l))
-    # print("l", l)
     grid += [l]
 
-# Types de rectangles possibles
+# Types de shapes (formes) possibles
 def generate_shapes():
     shapes = []
-    # Le rectangle le plus petit compte au moins L mushroom ET L tomato
-    # for j in range(2*L, H+1):
+    # La forme la plus petite compte au moins L mushroom ET L tomato
     for j in range(H, 2*L - 1, -1):
         for i in range(1, j+1):
             if j%i == 0:
@@ -147,23 +144,25 @@ def backtrack(l_partition):
 # l_partition = []
 # backtrack(l_partition)
 
-whole_pizza = sns(x0 = 0, x1 = C - 1, y0 = 0, y1 = R - 1)
-nb_M, nb_T = contents(whole_pizza)
-print(nb_M, nb_T)
 
-ressource_min_id = None
-if (nb_M < nb_T):
-    ressource_min_id = M_id
-else:
-    ressource_min_id = T_id
+def compute_l_seed_pt():
+    whole_pizza = sns(x0 = 0, x1 = C - 1, y0 = 0, y1 = R - 1)
+    nb_M, nb_T = contents(whole_pizza)
+    print("nb M", nb_M, "nb T", nb_T)
 
-l_seed_pt = []
-for y in range(R):
-    for x in range(C):
-        if (grid[y][x] == ressource_min_id):
-            l_seed_pt.append( sns(x=x, y=y) )
+    ressource_min_id = None
+    if (nb_M < nb_T):
+        ressource_min_id = M_id
+    else:
+        ressource_min_id = T_id
 
-# print(l_seed_pt)
+    l_seed_pt = []
+    for y in range(R):
+        for x in range(C):
+            if (grid[y][x] == ressource_min_id):
+                l_seed_pt.append( sns(x=x, y=y) )
+
+    return l_seed_pt
 
 def in_possible_rect(l_possible_rect, rect):
     for tmp_rect in l_possible_rect:
@@ -179,6 +178,7 @@ def compute_l_possible_rect():
     l_possible_rect = []
 
     shapes = generate_shapes()
+    l_seed_pt = compute_l_seed_pt()
     for pt in l_seed_pt:
         for shape in shapes:
             # print(shape)
