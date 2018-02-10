@@ -101,6 +101,10 @@ def is_rectangle_valid(rect):
 
     return True
 
+class Pt(object):
+    def __init__(self, x, y):
+        self.x = x
+        self.y = y
 
 class Rectangle(object):
     def __init__(self, x0, x1, y0, y1):
@@ -138,6 +142,10 @@ class Rectangle(object):
     def __gt__(self, other):
         return other.__lt__(self)
 
+    def contain(self, pt):
+        return ((self.x0 <= pt.x) and (pt.x <= self.x1) and
+                (self.y0 <= pt.y) and (pt.y <= self.y1))
+
 
 def compute_l_seed_pt():
     '''
@@ -157,9 +165,24 @@ def compute_l_seed_pt():
     for y in range(R):
         for x in range(C):
             if (grid[y][x] == ressource_min_id):
-                l_seed_pt.append( sns(x=x, y=y) )
+                l_seed_pt.append( Pt(x=x, y=y) )
 
     return l_seed_pt
+
+def get_possible_rect(pt_seed, shapes):
+    l_possible_rect = list()
+
+    for shape in shapes:
+        for x_offset in range(shape.x):
+            for y_offset in range(shape.y):
+                start_x = pt_seed.x - x_offset
+                start_y = pt_seed.y - y_offset
+                rect = Rectangle(start_x, start_x + shape.x -1,
+                                 start_y, start_y + shape.y -1)
+                if (is_rectangle_valid(rect)):
+                    l_possible_rect.append(rect)
+
+    return l_possible_rect
 
 def compute_l_possible_rect():
     '''
@@ -170,17 +193,8 @@ def compute_l_possible_rect():
 
     shapes = generate_shapes()
     l_seed_pt = compute_l_seed_pt()
-    for pt in l_seed_pt:
-        for shape in shapes:
-            for x_offset in range(shape.x):
-                for y_offset in range(shape.y):
-                    start_x = pt.x - x_offset
-                    start_y = pt.y - y_offset
-                    rect = Rectangle(start_x, start_x + shape.x -1,
-                                     start_y, start_y + shape.y -1)
-                    if ((rect not in s_possible_rect) and
-                        is_rectangle_valid(rect)):
-                        s_possible_rect.add(rect)
+    for pt_seed in l_seed_pt:
+        s_possible_rect = s_possible_rect.union (set (get_possible_rect (pt_seed, shapes)))
 
     l_possible_rect = sorted(list(s_possible_rect), reverse = True)
     return l_possible_rect
@@ -230,9 +244,7 @@ def backtrack():
 
     # print(l_possible_rect)
     context = []
-    first_time = True
     while (not((idx_partition == 0) and (idx_possible >= len(l_possible_rect)))):
-        first_time = False
         while(idx_possible < len(l_possible_rect)):
             cur_rect = l_possible_rect[idx_possible]
             if (does_overlap(l_partition, idx_partition, cur_rect)):
@@ -253,4 +265,62 @@ def backtrack():
         idx_possible += 1
 
 
-backtrack()
+# backtrack()
+
+def backtrack_big ():
+    '''
+    Probabiliste.
+    '''
+    global best_score, best_partition
+    from random import Random
+
+    l_partition = [None] * int((C * R)/(2*L))
+    l_seed_pt = compute_l_seed_pt()
+    shapes = generate_shapes()
+    rand = Random()
+
+    while (True):
+        # RAZ de la liste des reectangles
+        idx_partition = 0
+        # Tous les points seed sont a nouveau disponibles
+        pt_seed_avail = set(l_seed_pt)
+
+        for pt_seed in l_seed_pt:
+            if (pt_seed in pt_seed_avail):
+                pt_seed_avail.remove (pt_seed)
+            else:
+                continue
+
+            # Pour un point seed, on calcule au hazard un rectangle possible qui le contient
+            l_possible_rect = get_possible_rect(pt_seed, shapes)
+            idx_rect = rand.randint(0, len(l_possible_rect) -1)
+            cur_rect = l_possible_rect[idx_rect]
+
+            max_tentative = int(len(l_possible_rect) * 0.5)
+            i_tentative = 0
+            while (does_overlap(l_partition, idx_partition, cur_rect) and
+                   (i_tentative < max_tentative)):
+                idx_rect = rand.randint(0, len(l_possible_rect) -1)
+                cur_rect = l_possible_rect[idx_rect]
+                i_tentative += 1
+
+            # Pas de bon rectangle pour un seed pt, on passe au pt suivant
+            if (not (i_tentative < max_tentative)):
+                continue
+
+            # Ajout du rectangle à l'ensemble de partitionnemnt
+            l_partition[idx_partition] = cur_rect
+            idx_partition += 1
+
+            other_pt_seed_avail = set(pt_seed_avail)
+            for other_pt_seed in other_pt_seed_avail:
+                if cur_rect.contain (other_pt_seed):
+                    pt_seed_avail.remove (other_pt_seed)
+
+            if (best_score < score(l_partition[:idx_partition])):
+                best_score     = score(l_partition)
+                best_partition = l_partition[:idx_partition]
+                print_n_write_best()
+
+
+backtrack_big ()
