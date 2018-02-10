@@ -189,22 +189,13 @@ def does_overlap(p_list, len_p_list, rect):
     '''
     Calcul si un rectangle overlap les autres présents dans la liste p_list.
     '''
-    g = [[False]*C for _ in range(R)]
     for i in range(len_p_list):
-        p = p_list[i]
-        # On verifie que les cellules ne sont pas en double
-        for y in range(p.y0, p.y1 + 1):
-            for x in range(p.x0, p.x1 + 1):
-                if g[y][x]:
-                    return False
-                g[y][x] = True
-
-
-    x0, x1, y0, y1 = rect.x0, rect.x1, rect.y0, rect.y1
-    for y in range(y0, y1 + 1):
-        for x in range(x0, x1 + 1):
-            if g[y][x]:
-                return True
+        tmp_rect = p_list[i]
+        for x in range(rect.x0, rect.x1 + 1):
+            for y in range(rect.y0, rect.y1 + 1):
+                if ((tmp_rect.x0 <= x) and (x <= tmp_rect.x1) and
+                    (tmp_rect.y0 <= y) and (y <= tmp_rect.y1)):
+                    return True
 
     return False
 
