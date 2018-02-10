@@ -293,14 +293,21 @@ def backtrack_big ():
 
             # Pour un point seed, on calcule au hazard un rectangle possible qui le contient
             l_possible_rect = get_possible_rect(pt_seed, shapes)
-            idx_rect = rand.randint(0, len(l_possible_rect) -1)
+            idx_rect = 0
+            if (0 < (len(l_possible_rect) -1)):
+                idx_rect = rand.randint(0, len(l_possible_rect) -1)
+            else :
+                idx_rect = 0
             cur_rect = l_possible_rect[idx_rect]
 
             max_tentative = int(len(l_possible_rect) * 0.5)
             i_tentative = 0
             while (does_overlap(l_partition, idx_partition, cur_rect) and
                    (i_tentative < max_tentative)):
-                idx_rect = rand.randint(0, len(l_possible_rect) -1)
+                if (0 < (len(l_possible_rect) -1)):
+                    idx_rect = rand.randint(0, len(l_possible_rect) -1)
+                else :
+                    idx_rect = 0
                 cur_rect = l_possible_rect[idx_rect]
                 i_tentative += 1
 
