@@ -325,8 +325,8 @@ def backtrack_big ():
                     pt_seed_avail.remove (other_pt_seed)
 
             if (best_score < score(l_partition[:idx_partition])):
-                best_score     = score(l_partition)
                 best_partition = l_partition[:idx_partition]
+                best_score     = score (best_partition)
                 print_n_write_best()
 
 
