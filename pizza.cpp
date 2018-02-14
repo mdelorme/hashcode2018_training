@@ -3,6 +3,10 @@
 int R, C, L, H;
 int **pizza;
 
+struct Point {
+  int x, y;
+};
+
 struct Rect {
   int x0, y0, x1, y1;
 
@@ -35,16 +39,33 @@ void compute_shapes(std::vector<Rect> &out) {
     for (int i=1; i <= j+1; ++i)
       if (j%i == 0)
 	out.push_back(Rect{0, 0, i, j/i});
+
+  /*
+    Tri -> Ne marche pas super.
+    Trier par ordre croissant de taille tend a sous exploiter la grille
+
+  auto lambda = [&] (const Rect &a, const Rect &b) {
+		  return (a.x1-a.x0)*(a.y1-a.y0) > (b.x1-b.x0)*(b.y1-b.y0);
+		};
+
+  std::sort(out.begin(), out.end(), lambda);
+  */
 }
 
 
 void greedy() {
   std::vector<Rect> partition;
+  int **partition_index;
   bool used[R][C];
   memset(used, 0, R*C*sizeof(bool));
 
-  int score = 0;
+  partition_index = new int*[R];
+  for (int r=0; r < R; ++r)
+    partition_index[r] = new int[C];
 
+  int score    = 0;
+  int cur_part = 0;
+  
   // On check chaque case
   for (int y=0; y < R; ++y) {
     for (int x=0; x < C; ++x) {
@@ -53,7 +74,11 @@ void greedy() {
 	continue;
 
       // On essaie de prendre une forme qui tienne
-      for (auto s : shapes) {
+      int best_shape = -1;
+      float best_score = -1;
+      float cur_score = -1;
+      for (int i=0; i < shapes.size(); ++i) {
+	auto &s = shapes[i];
 	bool is_valid = true;
 	int Mc = 0;
 	int Tc = 0;
@@ -95,24 +120,78 @@ void greedy() {
 	if (!is_valid || Mc < L || Tc < L || Mc+Tc > H)
 	  continue;
 
-	// On marque toutes les cases utilisees par la procedure
-	for (int nx=x; nx < x+s.x1; ++nx)
-	  for (int ny=y; ny < y+s.y1; ++ny)
-	    used[ny][nx] = true;
-
-	// Et on ajoute la partition au groupe final
-	partition.push_back(Rect{x, y, x+s.x1-1, y+s.y1-1});
-	score += Mc+Tc;
+	// On calcule le score courant : taille totale - difference entre Mc et Tcc
+	cur_score = Mc+Tc - abs(Mc-Tc);
+	if (cur_score > best_score) {
+	  best_shape = i;
+	  best_score = cur_score;
+	}
       }
+
+      // On marque toutes les cases utilisees par la procedure
+      if (best_shape < 0)
+	continue;
+      
+      auto s = shapes[best_shape];
+      for (int nx=x; nx < x+s.x1; ++nx) {
+	for (int ny=y; ny < y+s.y1; ++ny) {
+	  used[ny][nx] = true;
+	  partition_index[ny][nx] = cur_part;
+	}
+      }
+      
+      // Et on ajoute la partition au groupe final
+      Rect r {x, y, x+s.x1-1, y+s.y1-1};
+      partition.push_back(r);
+      score += r.area();
+      cur_part++;
     }
   }
-  
+
+  // Greedy score + partition
   std::cerr << "Final score : " << score << std::endl;
   std::cout << partition.size() << std::endl;
   for (auto r : partition) {
     std::cout << r.y0 << " " << r.x0 << " " << r.y1 << " " << r.x1
 	      << std::endl;
   }
+
+  // Diagnostics :
+  constexpr bool print_distrib = false;
+  constexpr bool print_seeds = false;
+
+  // Partition distribution
+  if (print_distrib) {
+    std::cerr << "Partition distribution : " << std::endl;
+    for (int y=0; y < R; ++y) {
+      for (int x=0; x < C; ++x) {
+	std::cerr << (used[y][x] ? partition_index[y][x] : -1) << "\t";
+      }
+      std::cerr << std::endl;
+    }
+  }
+
+  // Building seed list
+  std::vector<Point> seeds;
+  for (int y=0; y < R; ++y) {
+    for (int x=0; x < C; ++x) {
+      if (!used[y][x])
+	seeds.push_back(Point{x, y});
+    }
+  }
+
+  // Seeds
+  if (print_seeds) {
+    std::cerr << "Unassigned positions : " << std::endl;
+    for (auto p : seeds)
+      std::cerr << p.x << " " << p.y << std::endl;
+  }
+  
+  // Liberation de la memoire
+  for (int r=0; r < R; ++r)
+    delete partition_index[r];
+  delete [] partition_index;
+    
 }
 
 int main() {
