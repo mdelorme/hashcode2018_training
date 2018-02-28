@@ -224,6 +224,9 @@ int main(int argc, char **argv) {
   for (int r=0; r < R; ++r)
     delete pizza[r];
   delete [] pizza;
+
+  if (argc > 1)
+    input_file.close();
   
   return 0;
 }
