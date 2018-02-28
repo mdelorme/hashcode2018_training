@@ -3,6 +3,8 @@
 int R, C, L, H;
 int **pizza;
 
+std::istream *input;
+
 struct Point {
   int x, y;
 };
@@ -194,9 +196,18 @@ void greedy() {
     
 }
 
-int main() {
+int main(int argc, char **argv) {
+  std::ifstream input_file;
+  // Si on a un argument passe sur la ligne de commande, on
+  // assigne le buffer de cin sur ce fichier
+  if (argc > 1) {
+    input_file.open(argv[1]);
+    std::cin.rdbuf(input_file.rdbuf());
+  }
+  
   // Init
   std::cin >> R >> C >> L >> H;
+  std::cerr << R << " "<< C << " " << L << " " << H << std::endl;
   pizza = new int*[R];
   for (int r=0; r < R; ++r) {
     pizza[r] = new int[C];
